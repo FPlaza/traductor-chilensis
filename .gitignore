@@ -1,0 +1,26 @@
+# General
+.env
+.DS_Store
+
+# Node / NestJS (Sugerencias y API Gateway)
+node_modules/
+dist/
+npm-debug.log*
+yarn-error.log*
+
+# Rust (Contexto)
+target/
+Cargo.lock
+
+# Go (Traductor)
+bin/
+*.exe
+*.out
+
+# Java / Spring Boot (Diccionario)
+target/
+*.class
+*.jar
+*.war
+.mvn/
+!/.mvn/wrapper/maven-wrapper.jar

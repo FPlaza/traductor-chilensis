@@ -1,0 +1,102 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+    networks:
+      - chilensis_net
+
+  api-gateway:
+    build: 
+      context: ./api-gateway
+    container_name: api_gateway
+    ports:
+      - "4000:3000"
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    networks:
+      - chilensis_net
+    depends_on:
+      - traductor
+      - diccionario
+      - contexto
+      - sugerencias
+
+  traductor:
+    build:
+      context: ./traductor
+    container_name: traductor
+    environment:
+      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_traductor
+    volumes:
+      - ./traductor:/app
+    networks:
+      - chilensis_net
+    depends_on:
+      - postgres
+
+  diccionario:
+    build:
+      context: ./diccionario
+    container_name: diccionario
+    environment:
+      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_diccionario
+    volumes:
+      - ./diccionario:/app
+    networks:
+      - chilensis_net
+    depends_on:
+      - postgres
+
+  contexto:
+    build:
+      context: ./contexto
+    container_name: contexto
+    environment:
+      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_contexto
+    volumes:
+      - ./contexto:/app
+      - /app/target
+    networks:
+      - chilensis_net
+    depends_on:
+      - postgres
+
+  sugerencias:
+    build:
+      context: ./sugerencias
+    container_name: sugerencias
+    environment:
+      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_sugerencias
+    volumes:
+      - ./sugerencias:/app
+      - /app/node_modules
+    networks:
+      - chilensis_net
+    depends_on:
+      - postgres
+
+  frontend:
+    build: 
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - chilensis_net
+    depends_on:
+      - api-gateway
+
+networks:
+  chilensis_net:
+    driver: bridge
