@@ -1,0 +1,345 @@
+# ============================================
+# Diccionario (Java + gRPC)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diccionario
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: diccionario
+  template:
+    metadata:
+      labels:
+        app: diccionario
+    spec:
+      containers:
+        - name: diccionario
+          image: traductor-chilensis/diccionario:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+            - containerPort: 50051
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: chilensis-secrets
+                  key: DB_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diccionario-service
+  namespace: chilensis
+spec:
+  selector:
+    app: diccionario
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+
+---
+# ============================================
+# Contexto (Rust + gRPC)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contexto
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: contexto
+  template:
+    metadata:
+      labels:
+        app: contexto
+    spec:
+      containers:
+        - name: contexto
+          image: traductor-chilensis/contexto:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+            - containerPort: 50052
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chilensis-secrets
+                  key: DATABASE_URL_CONTEXTO
+            - name: PORT
+              value: "8082"
+            - name: GRPC_PORT
+              value: "50052"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8082
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contexto-service
+  namespace: chilensis
+spec:
+  selector:
+    app: contexto
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+    - name: grpc
+      port: 50052
+      targetPort: 50052
+
+---
+# ============================================
+# Traductor (Go)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traductor
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traductor
+  template:
+    metadata:
+      labels:
+        app: traductor
+    spec:
+      containers:
+        - name: traductor
+          image: traductor-chilensis/traductor:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chilensis-secrets
+                  key: DATABASE_URL_TRADUCTOR
+            - name: DICCIONARIO_GRPC_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: DICCIONARIO_GRPC_ADDR
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: NATS_URL
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traductor-service
+  namespace: chilensis
+spec:
+  selector:
+    app: traductor
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# ============================================
+# Sugerencias (NestJS)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sugerencias
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sugerencias
+  template:
+    metadata:
+      labels:
+        app: sugerencias
+    spec:
+      containers:
+        - name: sugerencias
+          image: traductor-chilensis/sugerencias:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: chilensis-secrets
+                  key: DATABASE_URL_SUGERENCIAS
+            - name: NATS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: NATS_URL
+          readinessProbe:
+            httpGet:
+              path: /api/sugerencias/health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sugerencias-service
+  namespace: chilensis
+spec:
+  selector:
+    app: sugerencias
+  ports:
+    - port: 3001
+      targetPort: 3001
+
+---
+# ============================================
+# API Gateway (NestJS + GraphQL)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: traductor-chilensis/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: TRADUCTOR_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: TRADUCTOR_URL
+            - name: SUGERENCIAS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: SUGERENCIAS_URL
+            - name: CONTEXTO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: chilensis-config
+                  key: CONTEXTO_URL
+          readinessProbe:
+            httpGet:
+              path: /graphql
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service
+  namespace: chilensis
+spec:
+  selector:
+    app: api-gateway
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30000
+
+---
+# ============================================
+# Frontend (React)
+# ============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: chilensis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: traductor-chilensis/frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5173
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: chilensis
+spec:
+  selector:
+    app: frontend
+  type: NodePort
+  ports:
+    - port: 5173
+      targetPort: 5173
+      nodePort: 30001

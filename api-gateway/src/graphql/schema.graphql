@@ -1,0 +1,87 @@
+type Query {
+  historial(limit: Int): HistorialResult!
+  sugerencias(estado: EstadoSugerencia): [Sugerencia!]!
+  sugerencia(id: Int!): Sugerencia
+  regiones: [Region!]!
+  variacionesRegionales(termino: String!): VariacionesResult!
+  health: HealthStatus!
+}
+
+type Mutation {
+  traducir(texto: String!, region: String): TraduccionResult!
+  crearSugerencia(input: CrearSugerenciaInput!): Sugerencia!
+  actualizarEstadoSugerencia(id: Int!, estado: EstadoSugerencia!): Sugerencia!
+}
+
+type TraduccionResult {
+  textoOriginal: String!
+  textoTraducido: String!
+  region: String!
+  palabrasDetectadas: [String!]!
+}
+
+type HistorialResult {
+  traducciones: [Traduccion!]!
+  total: Int!
+}
+
+type Traduccion {
+  id: Int!
+  textoOriginal: String!
+  textoTraducido: String!
+  region: String!
+  palabrasDetectadas: [String!]!
+  createdAt: String!
+}
+
+type Sugerencia {
+  id: Int!
+  palabra: String!
+  traduccionPropuesta: String!
+  descripcion: String
+  ejemploUso: String
+  region: String
+  estado: EstadoSugerencia!
+  usuarioEmail: String
+  createdAt: String!
+}
+
+type Region {
+  id: Int!
+  nombre: String!
+  descripcion: String
+}
+
+type VariacionItem {
+  region: String!
+  variacion: String!
+  notas: String
+}
+
+type VariacionesResult {
+  termino: String!
+  variaciones: [VariacionItem!]!
+}
+
+type HealthStatus {
+  gateway: String!
+  traductor: String!
+  diccionario: String!
+  contexto: String!
+  sugerencias: String!
+}
+
+enum EstadoSugerencia {
+  pendiente
+  aprobada
+  rechazada
+}
+
+input CrearSugerenciaInput {
+  palabra: String!
+  traduccionPropuesta: String!
+  descripcion: String
+  ejemploUso: String
+  region: String
+  usuarioEmail: String
+}

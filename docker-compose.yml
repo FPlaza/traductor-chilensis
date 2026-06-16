@@ -1,33 +1,73 @@
 services:
+
+  # ============================================
+  # Infraestructura
+  # ============================================
   postgres:
     image: postgres:15-alpine
     container_name: postgres_db
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - ./db:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chilensis_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:latest
+    container_name: nats_server
+    ports:
+      - "4222:4222"
+      - "8222:8222"
     networks:
       - chilensis_net
 
-  api-gateway:
-    build: 
-      context: ./api-gateway
-    container_name: api_gateway
+  # ============================================
+  # Microservicios Backend
+  # ============================================
+  diccionario:
+    build:
+      context: ./diccionario
+    container_name: diccionario
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=admin
+      - DB_PASSWORD=admin_password
     ports:
-      - "4000:3000"
-    volumes:
-      - ./api-gateway:/app
-      - /app/node_modules
+      - "8081:8081"
     networks:
       - chilensis_net
     depends_on:
-      - traductor
-      - diccionario
-      - contexto
-      - sugerencias
+      postgres:
+        condition: service_healthy
+
+  contexto:
+    build:
+      context: .
+      dockerfile: contexto/Dockerfile
+    container_name: contexto
+    environment:
+      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_contexto
+      - PORT=8082
+      - GRPC_PORT=50052
+    ports:
+      - "8082:8082"
+      - "50052:50052"
+    networks:
+      - chilensis_net
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   traductor:
     build:
@@ -35,39 +75,23 @@ services:
     container_name: traductor
     environment:
       - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_traductor
-    volumes:
-      - ./traductor:/app
+      - DICCIONARIO_ADDR=diccionario:8081
+      - CONTEXTO_GRPC_ADDR=contexto:50052
+      - NATS_URL=nats://nats:4222
+      - PORT=8080
+    ports:
+      - "8080:8080"
     networks:
       - chilensis_net
     depends_on:
-      - postgres
-
-  diccionario:
-    build:
-      context: ./diccionario
-    container_name: diccionario
-    environment:
-      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_diccionario
-    volumes:
-      - ./diccionario:/app
-    networks:
-      - chilensis_net
-    depends_on:
-      - postgres
-
-  contexto:
-    build:
-      context: ./contexto
-    container_name: contexto
-    environment:
-      - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_contexto
-    volumes:
-      - ./contexto:/app
-      - /app/target
-    networks:
-      - chilensis_net
-    depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      diccionario:
+        condition: service_started
+      contexto:
+        condition: service_started
+      nats:
+        condition: service_started
 
   sugerencias:
     build:
@@ -75,27 +99,58 @@ services:
     container_name: sugerencias
     environment:
       - DATABASE_URL=postgres://admin:admin_password@postgres:5432/db_sugerencias
-    volumes:
-      - ./sugerencias:/app
-      - /app/node_modules
+      - NATS_URL=nats://nats:4222
+      - PORT=3001
+    ports:
+      - "3001:3001"
     networks:
       - chilensis_net
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
 
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api_gateway
+    environment:
+      - TRADUCTOR_URL=http://traductor:8080
+      - SUGERENCIAS_URL=http://sugerencias:3001
+      - CONTEXTO_URL=http://contexto:8082
+      - PORT=3000
+    ports:
+      - "4000:3000"
+    networks:
+      - chilensis_net
+    depends_on:
+      traductor:
+        condition: service_started
+      sugerencias:
+        condition: service_started
+      contexto:
+        condition: service_started
+
+  # ============================================
+  # Frontend
+  # ============================================
   frontend:
-    build: 
+    build:
       context: ./frontend
     container_name: frontend
+    environment:
+      - VITE_GRAPHQL_URL=http://localhost:4000/graphql
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     networks:
       - chilensis_net
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_started
+
+volumes:
+  postgres_data:
 
 networks:
   chilensis_net:

@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package chilensis;
+
+option go_package = "./proto";
+option java_package = "com.chilensis.proto";
+option java_outer_classname = "ChilensisProto";
+
+// ============================================
+// Servicio Diccionario (Java)
+// ============================================
+service DiccionarioService {
+  rpc BuscarTermino (BuscarTerminoRequest) returns (BuscarTerminoResponse);
+  rpc BuscarMultiplesTerminos (BuscarMultiplesRequest) returns (BuscarMultiplesResponse);
+  rpc ListarTerminos (ListarTerminosRequest) returns (ListarTerminosResponse);
+}
+
+message BuscarTerminoRequest {
+  string palabra = 1;
+}
+
+message BuscarTerminoResponse {
+  bool encontrado = 1;
+  Termino termino = 2;
+}
+
+message BuscarMultiplesRequest {
+  repeated string palabras = 1;
+}
+
+message BuscarMultiplesResponse {
+  repeated Termino terminos = 1;
+}
+
+message ListarTerminosRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message ListarTerminosResponse {
+  repeated Termino terminos = 1;
+  int32 total = 2;
+}
+
+message Termino {
+  int32 id = 1;
+  string palabra = 2;
+  string traduccion = 3;
+  string descripcion = 4;
+  string ejemplo_uso = 5;
+}
+
+// ============================================
+// Servicio Contexto (Rust)
+// ============================================
+service ContextoService {
+  rpc FiltrarPorRegion (FiltrarRegionRequest) returns (FiltrarRegionResponse);
+  rpc ObtenerVariaciones (VariacionesRequest) returns (VariacionesResponse);
+}
+
+message FiltrarRegionRequest {
+  string termino = 1;
+  string region = 2; // "Norte", "Centro", "Sur"
+}
+
+message FiltrarRegionResponse {
+  string termino_adaptado = 1;
+  string region = 2;
+  string nota = 3;
+}
+
+message VariacionesRequest {
+  string termino = 1;
+}
+
+message VariacionesResponse {
+  repeated VariacionRegional variaciones = 1;
+}
+
+message VariacionRegional {
+  string region = 1;
+  string variacion = 2;
+  string notas = 3;
+}
