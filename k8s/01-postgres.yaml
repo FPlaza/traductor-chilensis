@@ -20,15 +20,9 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_USER
-              valueFrom:
-                configMapKeyRef:
-                  name: chilensis-config
-                  key: DB_USER
+              value: "admin"
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: chilensis-secrets
-                  key: DB_PASSWORD
+              value: "admin_password"
             - name: POSTGRES_DB
               value: "postgres"
           volumeMounts:
@@ -38,7 +32,7 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "admin"]
+              command: ["pg_isready", "-U", "admin", "-d", "postgres"]
             initialDelaySeconds: 10
             periodSeconds: 5
       volumes:

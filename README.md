@@ -12,18 +12,18 @@ Frontend (React/Vite)
    API Gateway (NestJS)
    ┌────┬────┬────┐
    ↓    ↓    ↓    ↓
- gRPC REST REST  REST
+ REST REST REST gRPC
    ↓    ↓    ↓    ↓
-Diccio Tradu Conte Sugere
-(Java) (Go)  (Rust)(NestJS)
+Diccio Tradu Sugere Conte
+(Java) (Go) (NestJS)(Rust)
    ↓    ↓    ↓    ↓
   DB   DB   DB   DB
  (PG) (PG) (PG) (PG)
 ```
 
 ### Protocolos de comunicación
-- **gRPC** → API Gateway ↔ Diccionario (Java), Traductor ↔ Contexto (Rust)
-- **REST/HTTP** → API Gateway ↔ Traductor, Sugerencias, Contexto
+- **gRPC** → Contexto (Rust) expone gRPC en puerto 50052
+- **REST/HTTP** → Comunicación entre microservicios
 - **GraphQL** → Frontend ↔ API Gateway
 
 ---
@@ -33,69 +33,122 @@ Diccio Tradu Conte Sugere
 | Servicio | Lenguaje | Puerto | DB |
 |---|---|---|---|
 | frontend | TypeScript/React | 5173 | - |
-| api-gateway | TypeScript/NestJS | 4000 | - |
+| api-gateway | TypeScript/NestJS | 3000 | - |
 | traductor | Go + Gin + GORM | 8080 | db_traductor |
-| diccionario | Java + Spring Boot | 8081/50051 | db_diccionario |
+| diccionario | Java + Spring Boot | 8081 | db_diccionario |
 | contexto | Rust + Actix-web | 8082/50052 | db_contexto |
 | sugerencias | TypeScript/NestJS | 3001 | db_sugerencias |
 
 ---
 
-## 🚀 Cómo correr el proyecto
-
-### Con Docker Compose (desarrollo)
+## 🚀 Opción 1 — Docker Compose (desarrollo local)
 
 ```bash
-# 1. Descargar imágenes base
-docker pull node:22-alpine
-docker pull node:20-alpine
-docker pull rust:latest
-docker pull maven:3.9-eclipse-temurin-17
-docker pull golang:1.21-alpine
-docker pull postgres:15-alpine
-docker pull nats:latest
+# 1. Instalar dependencias Node (primera vez)
+cd sugerencias && npm install && cd ..
+cd api-gateway && npm install && cd ..
+cd frontend && npm install && cd ..
 
-# 2. Construir todos los servicios
+# 2. Construir imágenes
 docker-compose build
 
-# 3. Levantar
+# 3. Levantar todo
 docker-compose up -d
 
 # 4. Ver logs
 docker-compose logs -f
 ```
 
-**URLs disponibles:**
+**URLs:**
 - Frontend: http://localhost:5173
 - GraphQL Playground: http://localhost:4000/graphql
 - NATS Monitoring: http://localhost:8222
 
 ---
 
-### Con Kubernetes (producción)
+## ☸️ Opción 2 — Kubernetes con Minikube
+
+### Pre-requisitos
+```bash
+brew install kubectl
+brew install minikube
+```
+
+### Pasos
 
 ```bash
-# Pre-requisitos: minikube o kind instalado
+# 1. Iniciar minikube con Docker
+minikube start --driver=docker --memory=4096 --cpus=4
 
-# 1. Iniciar minikube
-minikube start
-
-# 2. Construir imágenes dentro de minikube
+# 2. Apuntar Docker al contexto de minikube
 eval $(minikube docker-env)
+
+# 3. Construir imágenes DENTRO de minikube
 docker-compose build
 
-# 3. Aplicar manifiestos
+# 4. Aplicar namespace, postgres y nats
 kubectl apply -f k8s/00-namespace.yaml
 kubectl apply -f k8s/01-postgres.yaml
 kubectl apply -f k8s/02-nats.yaml
+
+# 5. Crear ConfigMap del init.sql (OBLIGATORIO antes de que postgres arranque)
+kubectl create configmap postgres-init-sql \
+  --from-file=init.sql=db/init.sql \
+  -n chilensis
+
+# 6. Aplicar microservicios
 kubectl apply -f k8s/03-microservicios.yaml
 
-# 4. Verificar pods
+# 7. Quitar readinessProbe del api-gateway y diccionario (evita que queden en 0/1)
+kubectl patch deployment api-gateway -n chilensis --type=json \
+  -p='[{"op":"remove","path":"/spec/template/spec/containers/0/readinessProbe"}]'
+kubectl patch deployment diccionario -n chilensis --type=json \
+  -p='[{"op":"remove","path":"/spec/template/spec/containers/0/readinessProbe"}]'
+
+# 8. Verificar que todos los pods estén Running (puede tomar 2-3 minutos)
 kubectl get pods -n chilensis
 
-# 5. Acceder a los servicios
+# 9. Abrir el api-gateway en una terminal y anotar el puerto
+# Terminal 1
 minikube service api-gateway-service -n chilensis
+# Ejemplo: http://127.0.0.1:51807  → puerto es 51807
+
+# 10. Rebuilder el frontend con ese puerto (reemplazar PUERTO con el real)
+# Terminal 2
+eval $(minikube docker-env)
+docker build --no-cache \
+  --build-arg VITE_GRAPHQL_URL=http://127.0.0.1:PUERTO/graphql \
+  -t traductor-chilensis-frontend:latest \
+  ./frontend
+kubectl rollout restart deployment/frontend -n chilensis
+
+# 11. Abrir el frontend
 minikube service frontend-service -n chilensis
+```
+
+### Comandos útiles
+```bash
+# Ver estado de todos los pods
+kubectl get pods -n chilensis
+
+# Ver logs de un servicio
+kubectl logs deployment/traductor -n chilensis
+kubectl logs deployment/diccionario -n chilensis
+
+# Reiniciar un deployment
+kubectl rollout restart deployment/traductor -n chilensis
+
+# Ver todos los recursos
+kubectl get all -n chilensis
+
+# Detener minikube
+minikube stop
+
+# Volver al Docker normal
+eval $(minikube docker-env -u)
+
+# Limpiar todo y empezar de cero
+minikube delete
 ```
 
 ---
@@ -126,7 +179,7 @@ docker-compose exec api-gateway npm test -- --coverage
 ```graphql
 # Traducir una frase
 mutation {
-  traducir(texto: "Oye huevón, ¿cachái? Eso estuvo bacán al tiro", region: "Centro") {
+  traducir(texto: "Oye weon, cachai? Eso estuvo bacan al tiro", region: "Centro") {
     textoOriginal
     textoTraducido
     palabrasDetectadas
@@ -162,11 +215,11 @@ query {
 
 ## ✅ Checklist de requisitos
 
-- [x] ≥ 3 microservicios dockerizados (tenemos 4 + gateway + frontend)
-- [x] ≥ 2 protocolos distintos (gRPC + REST, con GraphQL al cliente)
+- [x] ≥ 3 microservicios dockerizados (4 + gateway + frontend)
+- [x] ≥ 2 protocolos distintos (gRPC en Contexto + REST + GraphQL)
 - [x] Backend bajo cluster K8s (manifiestos en `/k8s`)
 - [x] API Gateway con GraphQL
 - [x] ≥ 60% cobertura de tests en cada servicio
-- [x] Cada servicio con su propia DB (db_traductor, db_diccionario, db_contexto, db_sugerencias)
+- [x] Cada servicio con su propia DB
 - [x] ≥ 3 lenguajes distintos (TypeScript, Go, Java, Rust)
 - [x] ORM en todos los servicios (TypeORM, GORM, Hibernate, SQLx)
