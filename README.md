@@ -156,21 +156,21 @@ minikube delete
 ## 🧪 Ejecutar Tests
 
 ```bash
-# Go (Traductor)
-docker-compose exec traductor go test ./... -v -cover
-
-# Java (Diccionario)
-docker-compose exec diccionario ./gradlew test
-
 # Rust (Contexto)
-docker-compose exec contexto cargo test
+cd contexto && cargo test
+
+o
+
+Remove-Item Env:RUSTFLAGS -ErrorAction SilentlyContinue; Remove-Item Env:CARGO_INCREMENTAL -ErrorAction SilentlyContinue; Remove-Item Env:LLVM_PROFILE_FILE -ErrorAction SilentlyContinue; & 'C:\cargo.exe' test
 
 # NestJS (Sugerencias)
-docker-compose exec sugerencias npm test -- --coverage
+cd sugerencias && npm test
 
-# NestJS (API Gateway)
-docker-compose exec api-gateway npm test -- --coverage
+# NestJS coverage report for sugerencias
+cd sugerencias && npm run test:cov
 ```
+
+> Para ver el porcentaje de cobertura en `sugerencias`, usa `npm run test:cov` y revisa el resumen generado en consola y/o en `sugerencias/coverage`.
 
 ---
 

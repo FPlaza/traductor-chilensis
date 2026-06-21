@@ -51,12 +51,11 @@ $ npm run start:prod
 # unit tests
 $ npm run test
 
-# e2e tests
-$ npm run test:e2e
-
 # test coverage
 $ npm run test:cov
 ```
+
+> Ejecuta `npm run test:cov` para generar el reporte de cobertura y verificar que el porcentaje sea mayor o igual al 60%.
 
 ## Deployment
 

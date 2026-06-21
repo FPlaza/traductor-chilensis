@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, sqlx::FromRow)]
 pub struct Region {
     pub id: i32,
     pub nombre: String,
@@ -16,7 +16,7 @@ pub struct VariacionRegional {
     pub notas: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FiltrarRequest {
     pub termino: String,
     pub region: String,
