@@ -104,7 +104,7 @@ minikube service frontend-service -n chilensis
 
 ```bash
 # Go (Traductor)
-docker-compose exec traductor go test ./... -v -cover
+docker run --rm -v "%cd%/traductor:/app" -v go-cache:/go/pkg/mod -w /app golang:1.25 bash -c "go mod tidy && go test ./... -v -cover"
 
 # Java (Diccionario)
 docker-compose exec diccionario ./gradlew test

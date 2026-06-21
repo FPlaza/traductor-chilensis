@@ -3,6 +3,11 @@ package service
 import (
 	"strings"
 	"testing"
+	grpcclient "github.com/fplaza/traductor-chilensis/traductor/internal/grpc"
+	"github.com/fplaza/traductor-chilensis/traductor/internal/model"
+	"github.com/fplaza/traductor-chilensis/traductor/internal/repository"
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
 )
 
 // Test de tokenización
@@ -103,5 +108,43 @@ func TestTokenizarEliminaPuntuacion(t *testing.T) {
 		if strings.ContainsAny(p, ".,!?;:") {
 			t.Errorf("la palabra '%s' contiene puntuación", p)
 		}
+	}
+}
+
+// TestObtenerHistorial_Exito prueba el flujo correcto del historial
+func TestObtenerHistorial_Exito(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("error abriendo db en memoria: %v", err)
+	}
+
+	err = db.AutoMigrate(&model.Traduccion{})
+    if err != nil {
+        t.Fatalf("error migrando la base de datos: %v", err)
+    }
+
+	repo := repository.NewTraduccionRepository(db)
+	var client *grpcclient.DiccionarioClient
+
+	service := NewTraductorService(repo, client)
+
+	resp, err := service.ObtenerHistorial(10)
+	if err != nil {
+		t.Errorf("no se esperaba error, se obtuvo: %v", err)
+	}
+
+	if resp == nil {
+		t.Fatal("se esperaba una respuesta no nula")
+	}
+}
+
+func TestNewTraductorService(t *testing.T) {
+	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	repo := repository.NewTraduccionRepository(db)
+	var client *grpcclient.DiccionarioClient
+
+	svc := NewTraductorService(repo, client)
+	if svc == nil {
+		t.Fatal("El servicio no debería ser nil")
 	}
 }
