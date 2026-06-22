@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1782099644360" clover="3.2.0">
+  <project timestamp="1782099644360" name="All files">
+    <metrics statements="80" coveredstatements="70" conditionals="21" coveredconditionals="17" methods="28" coveredmethods="25" elements="129" coveredelements="112" complexity="0" loc="80" ncloc="80" packages="3" files="6" classes="6"/>
+    <package name="src">
+      <metrics statements="24" coveredstatements="15" conditionals="2" coveredconditionals="0" methods="4" coveredmethods="3"/>
+      <file name="app.controller.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\app.controller.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="4" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="10" count="3" type="stmt"/>
+      </file>
+      <file name="app.module.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\app.module.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+      </file>
+      <file name="app.service.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\app.service.ts">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="1" count="2" type="stmt"/>
+        <line num="4" count="2" type="stmt"/>
+        <line num="6" count="5" type="stmt"/>
+      </file>
+      <file name="main.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\main.ts">
+        <metrics statements="9" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="1" count="0" type="stmt"/>
+        <line num="2" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="13" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.resolvers">
+      <metrics statements="23" coveredstatements="22" conditionals="0" coveredconditionals="0" methods="12" coveredmethods="10"/>
+      <file name="chilensis.resolver.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\resolvers\chilensis.resolver.ts">
+        <metrics statements="23" coveredstatements="22" conditionals="0" coveredconditionals="0" methods="12" coveredmethods="10"/>
+        <line num="1" count="2" type="stmt"/>
+        <line num="2" count="2" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="6" count="28" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="3" type="stmt"/>
+        <line num="16" count="2" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="22" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="44" count="2" type="stmt"/>
+        <line num="48" count="3" type="stmt"/>
+        <line num="53" count="2" type="stmt"/>
+        <line num="54" count="2" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="62" count="3" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.services">
+      <metrics statements="33" coveredstatements="33" conditionals="19" coveredconditionals="17" methods="12" coveredmethods="12"/>
+      <file name="microservicios.service.ts" path="C:\Users\guill\OneDrive\Documentos\GitHub\traductor-chilensis\api-gateway\src\services\microservicios.service.ts">
+        <metrics statements="33" coveredstatements="33" conditionals="19" coveredconditionals="17" methods="12" coveredmethods="12"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="2" count="3" type="stmt"/>
+        <line num="5" count="3" type="stmt"/>
+        <line num="6" count="24" type="stmt"/>
+        <line num="12" count="24" type="stmt"/>
+        <line num="16" count="24" type="stmt"/>
+        <line num="20" count="24" type="stmt"/>
+        <line num="27" count="3" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="3" type="stmt"/>
+        <line num="42" count="1" type="cond" truecount="2" falsecount="0"/>
+        <line num="55" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="57" count="2" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="62" count="1" type="stmt"/>
+        <line num="67" count="2" type="stmt"/>
+        <line num="75" count="2" type="stmt"/>
+        <line num="76" count="1" type="stmt"/>
+        <line num="80" count="2" type="stmt"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="88" count="1" type="stmt"/>
+        <line num="89" count="1" type="stmt"/>
+        <line num="93" count="2" type="stmt"/>
+        <line num="96" count="2" type="stmt"/>
+        <line num="100" count="3" type="stmt"/>
+        <line num="101" count="9" type="stmt"/>
+        <line num="102" count="9" type="stmt"/>
+        <line num="103" count="4" type="stmt"/>
+        <line num="105" count="5" type="stmt"/>
+        <line num="108" count="3" type="stmt"/>
+        <line num="113" count="3" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
