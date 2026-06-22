@@ -8,6 +8,7 @@ mod db;
 mod grpc_server;
 mod handlers;
 mod models;
+mod tests;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

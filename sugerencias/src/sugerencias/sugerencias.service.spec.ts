@@ -91,6 +91,30 @@ describe('SugerenciasService', () => {
 
       const resultado = await service.actualizarEstado(1, { estado: EstadoSugerencia.APROBADA });
       expect(resultado.estado).toBe(EstadoSugerencia.APROBADA);
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ estado: EstadoSugerencia.APROBADA }));
+    });
+  });
+
+  describe('contarPorEstado', () => {
+    it('debe devolver totales agrupados por estado', async () => {
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          { estado: EstadoSugerencia.PENDIENTE, total: '2' },
+          { estado: EstadoSugerencia.APROBADA, total: '1' },
+        ]),
+      } as any;
+
+      repo.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+      const resultado = await service.contarPorEstado();
+      expect(resultado).toEqual({
+        pendiente: 2,
+        aprobada: 1,
+      });
+      expect(mockQueryBuilder.select).toHaveBeenCalled();
     });
   });
 });

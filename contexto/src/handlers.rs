@@ -130,3 +130,83 @@ pub async fn obtener_variaciones(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, web, App};
+    use sqlx::postgres::PgPoolOptions;
+    use std::env;
+
+    // Helper para conectar a la DB real de tu docker-compose
+    async fn get_test_pool() -> sqlx::PgPool {
+        let db_url = env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@db_contexto:5432/db_contexto".to_string());
+        PgPoolOptions::new().connect(&db_url).await.expect("DB debe estar corriendo")
+    }
+
+    #[actix_web::test]
+    async fn test_health_ok() {
+        let app = test::init_service(App::new().route("/health", web::get().to(health))).await;
+        let req = test::TestRequest::get().uri("/health").to_request();
+        let resp = test::call_service(&app, req).await;
+        
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_listar_regiones_ok() {
+        let pool = get_test_pool().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool))
+                .route("/regiones", web::get().to(listar_regiones))
+        ).await;
+        
+        let req = test::TestRequest::get().uri("/regiones").to_request();
+        let resp = test::call_service(&app, req).await;
+        
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_filtrar_por_region_ok() {
+        let pool = get_test_pool().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool))
+                .route("/filtrar", web::post().to(filtrar_por_region))
+        ).await;
+        
+        let req = test::TestRequest::post()
+            .uri("/filtrar")
+            .set_json(FiltrarRequest {
+                termino: "bacán".to_string(),
+                region: "Centro".to_string(),
+            })
+            .to_request();
+            
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    // Este test forzará un error 500 conectándose a una DB falsa, 
+    // lo que cubrirá todas tus líneas "Err(e)" en el código.
+    #[actix_web::test]
+    async fn test_handlers_db_error_force() {
+        let fake_pool = PgPoolOptions::new()
+            .connect_lazy("postgres://fake:fake@localhost:1/fake")
+            .unwrap();
+            
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(fake_pool))
+                .route("/regiones", web::get().to(listar_regiones))
+        ).await;
+        
+        let req = test::TestRequest::get().uri("/regiones").to_request();
+        let resp = test::call_service(&app, req).await;
+        
+        assert_eq!(resp.status(), 500); // Valida el InternalServerError
+    }
+}

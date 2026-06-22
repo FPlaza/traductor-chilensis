@@ -163,14 +163,16 @@ docker run --rm -v "%cd%/traductor:/app" -v go-cache:/go/pkg/mod -w /app golang:
 docker run --rm -v "%cd%/diccionario:/app" -v gradle-cache:/home/gradle/.gradle -w /app gradle:8.5-jdk17 gradle test
 
 # Rust (Contexto)
-docker-compose exec contexto cargo test
+docker run --rm --security-opt seccomp=unconfined --network traductor-chilensis_chilensis_net -v "%cd%:/app" -v cargo-registry:/usr/local/cargo/registry -w /app/contexto -e DATABASE_URL="postgres://admin:admin_password@postgres:5432/db_contexto" xd009642/tarpaulin bash -c "apt-get update && apt-get install -y protobuf-compiler && cargo tarpaulin --exclude-files src/main.rs --exclude-files src/models.rs --out Html"
 
 # NestJS (Sugerencias)
-docker-compose exec sugerencias npm test -- --coverage
+cd sugerencias && npm test
 
-# NestJS (API Gateway)
-docker-compose exec api-gateway npm test -- --coverage
+# NestJS coverage report for sugerencias
+cd sugerencias && npm run test:cov
 ```
+
+> Para ver el porcentaje de cobertura en `sugerencias`, usa `npm run test:cov` y revisa el resumen generado en consola y/o en `sugerencias/coverage`.
 
 ---
 
