@@ -42,18 +42,12 @@ jobs:
       - name: Ejecutar tests
         run: docker run --rm -v "${{ github.workspace }}/diccionario:/app" -w /app gradle:8.5-jdk17 gradle test jacocoTestReport
         
-      - name: Crear tabla visual de Cobertura
-        uses: irongut/CodeCoverageSummary@v1.3.0
+      - name: Resumen de Cobertura (Java)
+        uses: Madrapps/jacoco-report@v1.6.1
         with:
-          # Le pasamos el XML de Jacoco directamente
-          filename: diccionario/build/reports/jacoco/test/jacocoTestReport.xml
-          badge: true
-          # Le decimos explícitamente que el formato no es cobertura estándar, sino jacoco
-          format: jacoco
-          output: both
-          
-      - name: Publicar tabla en GitHub
-        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+          paths: ${{ github.workspace }}/diccionario/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: Cobertura Diccionario (Java)
 
   test-contexto-rust:
     name: Contexto (Rust)

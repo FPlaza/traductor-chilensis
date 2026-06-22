@@ -91,3 +91,27 @@ func TestObtenerHistorial_LimiteInvalido(t *testing.T) {
 		t.Errorf("Esperaba código %d, obtuve %d", http.StatusOK, w.Code)
 	}
 }
+
+func TestObtenerHistorial_ErrorDB(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	
+	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	
+	sqlDB, _ := db.DB()
+	sqlDB.Close()
+	
+	repo := repository.NewTraduccionRepository(db)
+	svc := service.NewTraductorService(repo, nil)
+	h := NewTraductorHandler(svc)
+
+	r := gin.Default()
+	h.RegisterRoutes(r)
+
+	req, _ := http.NewRequest(http.MethodGet, "/api/historial", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Esperaba código %d, obtuve %d", http.StatusInternalServerError, w.Code)
+	}
+}
