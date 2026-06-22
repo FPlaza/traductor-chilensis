@@ -1,0 +1,129 @@
+name: Microservicios CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-traductor-go:
+    name: Traductor (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Ejecutar tests y generar XML
+        # Go no sabe sacar XML nativo, así que le agregamos una herramienta oficial (gocover-cobertura) que lo convierte al vuelo
+        run: docker run --rm -v "${{ github.workspace }}/traductor:/app" -w /app golang:1.25 bash -c "go mod tidy && go test -coverprofile=coverage.txt ./... && go run github.com/boumenot/gocover-cobertura@latest < coverage.txt > cobertura.xml"
+        
+      - name: Crear tabla visual de Cobertura
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: traductor/cobertura.xml
+          badge: true
+          format: markdown
+          output: both
+          
+      - name: Publicar tabla en GitHub
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+
+  test-diccionario-java:
+    name: Diccionario (Java)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Ejecutar tests
+        run: docker run --rm -v "${{ github.workspace }}/diccionario:/app" -w /app gradle:8.5-jdk17 gradle test
+        
+      - name: Crear tabla visual de Cobertura
+        # Para Java usamos una herramienta especial que lee Jacoco directamente
+        uses: Madrapps/jacoco-report@v1.6.1
+        with:
+          paths: ${{ github.workspace }}/diccionario/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: Cobertura Diccionario (Java)
+
+  test-contexto-rust:
+    name: Contexto (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Levantar DB de prueba
+        run: docker compose up -d postgres
+        
+      - name: Esperar conexión
+        run: sleep 10
+        
+      - name: Ejecutar Tarpaulin (Generando XML)
+        # Cambiamos "--out Html" por "--out Xml"
+        run: docker run --rm --security-opt seccomp=unconfined --network traductor-chilensis_chilensis_net -v "${{ github.workspace }}:/app" -w /app/contexto -e DATABASE_URL="postgres://admin:admin_password@postgres:5432/db_contexto" xd009642/tarpaulin bash -c "apt-get update && apt-get install -y protobuf-compiler && cargo tarpaulin --exclude-files src/main.rs --exclude-files src/models.rs --out Xml"
+        
+      - name: Crear tabla visual de Cobertura
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: contexto/cobertura.xml
+          badge: true
+          format: markdown
+          output: both
+          
+      - name: Publicar tabla en GitHub
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+
+  test-sugerencias-node:
+    name: Sugerencias (NestJS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Instalar y Testear
+        run: |
+          cd sugerencias
+          npm install
+          npm run test:cov
+          
+      - name: Crear tabla visual de Cobertura
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: sugerencias/coverage/cobertura-coverage.xml
+          badge: true
+          format: markdown
+          output: both
+          
+      - name: Publicar tabla en GitHub
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+
+  test-api-gateway:
+    name: API Gateway (NestJS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Instalar y Testear
+        run: |
+          cd api-gateway
+          npm install
+          npm run test:cov
+          
+      - name: Crear tabla visual de Cobertura
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: api-gateway/coverage/cobertura-coverage.xml
+          badge: true
+          format: markdown
+          output: both
+          
+      - name: Publicar tabla en GitHub
+        run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
