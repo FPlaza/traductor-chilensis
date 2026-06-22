@@ -3,20 +3,45 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let controller: AppController;
+  let service: AppService;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    controller = module.get<AppController>(AppController);
+    service = module.get<AppService>(AppService);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  it('debería ser definido', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('getHello', () => {
+    it('debe retornar "Hello World!"', () => {
+      const resultado = controller.getHello();
+      expect(resultado).toBe('Hello World!');
+    });
+
+    it('debe llamar al servicio getHello', () => {
+      jest.spyOn(service, 'getHello').mockReturnValue('Hello World!');
+
+      const resultado = controller.getHello();
+
+      expect(resultado).toBe('Hello World!');
+      expect(service.getHello).toHaveBeenCalled();
+    });
+
+    it('debe retornar el valor del servicio', () => {
+      const mensajeEsperado = 'Hello World!';
+      jest.spyOn(service, 'getHello').mockReturnValue(mensajeEsperado);
+
+      const resultado = controller.getHello();
+
+      expect(resultado).toBe(mensajeEsperado);
     });
   });
 });

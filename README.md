@@ -172,6 +172,18 @@ docker-compose exec sugerencias npm test -- --coverage
 docker-compose exec api-gateway npm test -- --coverage
 ```
 
+### Ejecutar tests localmente (API Gateway)
+
+- **Directorio**: `api-gateway` — ejecutar los siguientes comandos desde ese folder.
+- **Instalar dependencias**: `cd api-gateway && npm install`
+- **Ejecutar tests**: `npm test`
+- **Generar coverage**: `npm run test:cov`
+- **Ver reporte HTML**: abrir `coverage/lcov-report/index.html` (desde PowerShell en Windows: `start .\coverage\lcov-report\index.html`).
+
+Notas:
+- El script de coverage usa `jest --coverage` y escribe el reporte en `coverage/lcov-report`.
+- Si necesitas un servidor estático para ver el reporte en Linux/macOS puedes usar: `npx serve coverage/lcov-report -p 8081`.
+
 ---
 
 ## 📊 Ejemplo de uso GraphQL
