@@ -157,11 +157,7 @@ minikube delete
 
 ```bash
 # Rust (Contexto)
-cd contexto && cargo test
-
-o
-
-Remove-Item Env:RUSTFLAGS -ErrorAction SilentlyContinue; Remove-Item Env:CARGO_INCREMENTAL -ErrorAction SilentlyContinue; Remove-Item Env:LLVM_PROFILE_FILE -ErrorAction SilentlyContinue; & 'C:\cargo.exe' test
+docker run --rm --security-opt seccomp=unconfined --network traductor-chilensis_chilensis_net -v "%cd%:/app" -v cargo-registry:/usr/local/cargo/registry -w /app/contexto -e DATABASE_URL="postgres://admin:admin_password@postgres:5432/db_contexto" xd009642/tarpaulin bash -c "apt-get update && apt-get install -y protobuf-compiler && cargo tarpaulin --exclude-files src/main.rs --exclude-files src/models.rs --out Html"
 
 # NestJS (Sugerencias)
 cd sugerencias && npm test

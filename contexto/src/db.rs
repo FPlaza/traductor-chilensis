@@ -72,3 +72,28 @@ pub async fn run_migrations(pool: &PgPool) {
 
     info!("✅ Migraciones completadas");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgPoolOptions;
+    use std::env;
+
+    #[actix_web::test]
+    async fn test_run_migrations() {
+        // Obtenemos la URL de la DB del entorno (inyectada por Docker)
+        let db_url = env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://postgres:postgres@db_contexto:5432/db_contexto".to_string());
+            
+        let pool = PgPoolOptions::new()
+            .connect(&db_url)
+            .await
+            .expect("No se pudo conectar a la base de datos de test");
+
+        // Ejecutamos la migración
+        run_migrations(&pool).await;
+        
+        // Si no hay panic, el test pasó exitosamente
+        assert!(true);
+    }
+}
