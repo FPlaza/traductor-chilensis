@@ -43,7 +43,7 @@ jobs:
         run: docker run --rm -v "${{ github.workspace }}/diccionario:/app" -w /app gradle:8.5-jdk17 gradle test jacocoTestReport
         
       - name: Resumen de Cobertura (Java)
-        uses: Madrapps/jacoco-report@v1.6.1
+        uses: Madrapps/jacoco-report@v1.7.2
         with:
           paths: ${{ github.workspace }}/diccionario/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
