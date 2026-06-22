@@ -48,6 +48,7 @@ jobs:
           paths: ${{ github.workspace }}/diccionario/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Cobertura Diccionario (Java)
+          comment-type: summary
 
   test-contexto-rust:
     name: Contexto (Rust)
