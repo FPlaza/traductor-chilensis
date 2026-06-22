@@ -157,10 +157,10 @@ minikube delete
 
 ```bash
 # Go (Traductor)
-docker-compose exec traductor go test ./... -v -cover
+docker run --rm -v "%cd%/traductor:/app" -v go-cache:/go/pkg/mod -w /app golang:1.25 bash -c "go mod tidy && go test ./... -v -cover"
 
 # Java (Diccionario)
-docker-compose exec diccionario ./gradlew test
+docker run --rm -v "%cd%/diccionario:/app" -v gradle-cache:/home/gradle/.gradle -w /app gradle:8.5-jdk17 gradle test
 
 # Rust (Contexto)
 docker-compose exec contexto cargo test
